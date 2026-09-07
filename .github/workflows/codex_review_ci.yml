@@ -1,0 +1,33 @@
+name: Codex review PR 28330
+
+on:
+  push:
+    branches:
+      - codex/review-pr-28330
+
+jobs:
+  windows-gcc-unicode-path:
+    runs-on: windows-2025
+    timeout-minutes: 30
+    env:
+      VFLAGS: -cc gcc
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build V with GCC
+        run: .\makev.bat -gcc
+      - name: Run builder rewrite unit tests
+        run: .\v.exe -old-compiler test vlib/v/builder/cc_tcc_retry_test.v
+      - name: Compile and run inside a non-ASCII directory
+        shell: pwsh
+        run: |
+          $unicodeDir = Join-Path $env:RUNNER_TEMP '工作目录'
+          New-Item -ItemType Directory -Force $unicodeDir | Out-Null
+          Set-Content -Encoding utf8NoBOM (Join-Path $unicodeDir 'main.v') "fn main() { println('unicode-path-ok') }"
+          Push-Location $unicodeDir
+          try {
+            $output = & "$env:GITHUB_WORKSPACE\v.exe" -cc gcc run main.v
+            if ($LASTEXITCODE -ne 0) { throw "V exited with $LASTEXITCODE" }
+            if ($output -notcontains 'unicode-path-ok') { throw "unexpected output: $output" }
+          } finally {
+            Pop-Location
+          }
