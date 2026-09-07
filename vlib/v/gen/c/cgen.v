@@ -9009,6 +9009,9 @@ fn (mut g Gen) type_needs_deep_scope_gc_pin(typ ast.Type) bool {
 			return g.contains_ptr(info.elem_type)
 		}
 		.struct {
+			if sym.language != .v {
+				return g.c_type_has_ptr(resolved_typ)
+			}
 			return true
 		}
 		else {
@@ -9029,7 +9032,8 @@ fn (mut g Gen) c_type_has_ptr(typ ast.Type) bool {
 		return true
 	}
 	match sym.kind {
-		.i8, .i16, .i32, .int, .i64, .isize, .u8, .u16, .u32, .u64, .usize, .f32, .f64, .char, .rune, .bool, .enum {
+		.i8, .i16, .i32, .int, .i64, .isize, .u8, .u16, .u32, .u64, .usize, .f32, .f64, .char,
+		.rune, .bool, .enum {
 			return false
 		}
 		.array_fixed {
@@ -9146,17 +9150,6 @@ fn (mut g Gen) scope_gc_pin_pregen(node_pos int) []ScopeGcPin {
 		cvar_name := g.scope_gc_pin_expr(obj) or { continue }
 		collect_helper_name := g.boehm_collect_keep_alive_helper_name(obj.typ)
 		if collect_helper_name == '' {
-			if !opened_scope {
-				g.writeln('{')
-				opened_scope = true
-			}
-			// Some C aggregates cannot safely be named in a generated helper prototype.
-			// Keep the whole object conservatively reachable without referring to its type.
-			tmp_name := g.new_tmp_var()
-			g.writeln('voidptr ${tmp_name} = &${cvar_name};')
-			pins << ScopeGcPin{
-				post_stmt: 'GC_reachable_here(${tmp_name});'
-			}
 			continue
 		}
 		if !opened_scope {
