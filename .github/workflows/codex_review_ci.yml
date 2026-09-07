@@ -1,0 +1,43 @@
+name: Codex review PR 28421
+
+on:
+  push:
+    branches:
+      - codex/review-pr-28421
+
+jobs:
+  focused-linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build V
+        run: make
+      - name: Verify anonymous-union compilation and conservative pin
+        run: |
+          ./v -old-compiler -prod -gc boehm_full_opt run vlib/v/gen/c/testdata/boehm_keepalive_c_anon_union.vv
+          ./v -old-compiler -prod -gc boehm_full_opt -o /tmp/pr28421.c vlib/v/gen/c/testdata/boehm_keepalive_c_anon_union.vv
+          ! grep -F 'TestAnonEvent* it, voidptr* out, int idx' /tmp/pr28421.c
+          grep -F 'GC_reachable_here(_t' /tmp/pr28421.c
+
+  focused-windows-gcc:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    env:
+      VFLAGS: -cc gcc
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build V with GCC
+        run: .\makev.bat -gcc
+      - name: Verify anonymous-union compilation and conservative pin
+        shell: pwsh
+        run: |
+          .\v.exe -old-compiler -prod -gc boehm_full_opt run vlib/v/gen/c/testdata/boehm_keepalive_c_anon_union.vv
+          .\v.exe -old-compiler -prod -gc boehm_full_opt -o "$env:RUNNER_TEMP\pr28421.c" vlib/v/gen/c/testdata/boehm_keepalive_c_anon_union.vv
+          $generated = Get-Content -Raw "$env:RUNNER_TEMP\pr28421.c"
+          if ($generated.Contains('TestAnonEvent* it, voidptr* out, int idx')) {
+            throw 'unsafe typed keepalive helper was generated'
+          }
+          if (-not $generated.Contains('GC_reachable_here(_t')) {
+            throw 'conservative untyped pin was not generated'
+          }
