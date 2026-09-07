@@ -21,10 +21,10 @@ jobs:
         run: |
           set -euo pipefail
           for cc in tcc gcc clang; do
-            test "$(./v -cc "$cc" run vlib/v/gen/c/testdata/alias_c_struct_field.vv)" = '42'
-            test "$(./v -cc "$cc" run vlib/v/gen/c/testdata/alias_of_explicit_enum.vv)" = '0'
+            test "$(./v1_fallback -cc "$cc" run vlib/v/gen/c/testdata/alias_c_struct_field.vv)" = '42'
+            test "$(./v1_fallback -cc "$cc" run vlib/v/gen/c/testdata/alias_of_explicit_enum.vv)" = '0'
           done
       - name: Run C-output regression suite
-        run: ./v test vlib/v/gen/c/coutput_test.v
+        run: ./v1_fallback vlib/v/gen/c/coutput_test.v
       - name: Run checker tests
-        run: ./v test vlib/v/checker
+        run: ./v1_fallback test vlib/v/checker
