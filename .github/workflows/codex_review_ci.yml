@@ -1,0 +1,30 @@
+name: Codex PR review
+
+on:
+  push:
+    branches:
+      - 'codex/review-pr-28368'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-pr-28368:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build V
+        run: make -j4
+      - name: Run new fixtures with supported C compilers
+        run: |
+          set -euo pipefail
+          for cc in tcc gcc clang; do
+            test "$(./v -cc "$cc" run vlib/v/gen/c/testdata/alias_c_struct_field.vv)" = '42'
+            test "$(./v -cc "$cc" run vlib/v/gen/c/testdata/alias_of_explicit_enum.vv)" = '0'
+          done
+      - name: Run C-output regression suite
+        run: ./v test vlib/v/gen/c/coutput_test.v
+      - name: Run checker tests
+        run: ./v test vlib/v/checker
