@@ -1,0 +1,29 @@
+name: Codex PR review
+
+on:
+  push:
+    branches:
+      - 'codex/review-pr-28191'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-pr-28191:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build V
+        run: make -j4
+      - name: Verify formatting
+        run: |
+          ./v fmt -verify vlib/v3/transform/fn.v
+          ./v fmt -verify vlib/v/tests/generics/generic_fn_literal_matches_fn_type_alias_issue_28181_test.v
+      - name: Run issue 28181 regression
+        run: ./v vlib/v/tests/generics/generic_fn_literal_matches_fn_type_alias_issue_28181_test.v
+      - name: Run generics tests
+        run: ./v test vlib/v/tests/generics
+      - name: Run V3 tests
+        run: ./v test vlib/v3/tests
