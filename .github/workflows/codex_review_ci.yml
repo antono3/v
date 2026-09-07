@@ -1,0 +1,25 @@
+name: Codex review PR 28434
+
+on:
+  push:
+    branches:
+      - codex/review-pr-28434
+
+jobs:
+  focused-template-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build V
+        run: make
+      - name: Verify formatting
+        run: ./v fmt -verify vlib/v3/parser/tmpl.v vlib/v/tests/tmpl_issue_28433_test.v
+      - name: Run reported regression
+        run: ./v test vlib/v/tests/tmpl_issue_28433_test.v
+      - name: Run template test groups
+        run: |
+          ./v test vlib/v/tests/*tmpl*_test.v
+          ./v test vlib/v3/tests/tmpl*_test.v
+      - name: Build documented endif user
+        run: ./v examples/veb/todo
