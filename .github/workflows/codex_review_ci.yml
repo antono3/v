@@ -1,0 +1,19 @@
+name: Codex review PR 28109
+
+on:
+  push:
+    branches:
+      - codex/review-pr-28109
+
+jobs:
+  focused-arrays-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build V
+        run: make
+      - name: Verify formatting
+        run: ./v fmt -verify vlib/arrays/arrays.v vlib/arrays/arrays_test.v vlib/arrays/merge_desc_review_test.v
+      - name: Run arrays module tests
+        run: ./v test vlib/arrays/
