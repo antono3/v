@@ -25,8 +25,9 @@ jobs:
           Set-Content -Encoding utf8NoBOM (Join-Path $unicodeDir 'main.v') "fn main() { println('unicode-path-ok') }"
           Push-Location $unicodeDir
           try {
-            $output = & "$env:GITHUB_WORKSPACE\v.exe" -cc gcc run main.v
+            & "$env:GITHUB_WORKSPACE\v.exe" -old-compiler -showcc -cc gcc -o main.exe main.v
             if ($LASTEXITCODE -ne 0) { throw "V exited with $LASTEXITCODE" }
+            $output = & '.\main.exe'
             if ($output -notcontains 'unicode-path-ok') { throw "unexpected output: $output" }
           } finally {
             Pop-Location
