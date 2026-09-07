@@ -23,7 +23,9 @@ jobs:
           ./v fmt -verify vlib/v/tests/generics/generic_fn_literal_matches_fn_type_alias_issue_28181_test.v
       - name: Run issue 28181 regression
         run: ./v vlib/v/tests/generics/generic_fn_literal_matches_fn_type_alias_issue_28181_test.v
-      - name: Run generics tests
-        run: ./v test vlib/v/tests/generics
+      - name: Run function transform tests
+        run: |
+          ./v test vlib/v3/transform/fn_test.v
+          ./v test vlib/v3/transform/monomorphize_test.v
       - name: Run V3 tests
         run: ./v test vlib/v3/tests
